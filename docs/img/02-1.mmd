@@ -1,0 +1,9 @@
+flowchart LR
+  B([Bibliotecário])
+  B --> UC1(Gerenciar livros)
+  B --> UC2(Gerenciar membros)
+  B --> UC3(Registrar empréstimo)
+  B --> UC4(Registrar devolução)
+  B --> UC5(Consultar painel e atrasos)
+  UC3 -. inclui .-> V1(Validar regras RN01-RN03)
+  UC4 -. estende .-> D1(Desfazer devolução)

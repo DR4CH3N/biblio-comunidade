@@ -1,0 +1,11 @@
+{
+  "name": "biblio-comunidade",
+  "version": "1.0.0",
+  "description": "PIT II – Engenharia de Software: BiblioComunidade (low-code: front estático + Supabase/PostgreSQL)",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "npx serve src"
+  },
+  "license": "MIT"
+}

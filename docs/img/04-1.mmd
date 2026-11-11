@@ -1,0 +1,19 @@
+erDiagram
+  MEMBRO ||--o{ EMPRESTIMO : realiza
+  LIVRO  ||--o{ EMPRESTIMO : "é emprestado em"
+  MEMBRO { int id PK
+           string nome
+           string email UK
+           string telefone }
+  LIVRO  { int id PK
+           string titulo
+           string autor
+           string isbn UK
+           string categoria
+           int ano }
+  EMPRESTIMO { int id PK
+           int livro_id FK
+           int membro_id FK
+           date data_emprestimo
+           date data_prevista
+           date data_devolucao }

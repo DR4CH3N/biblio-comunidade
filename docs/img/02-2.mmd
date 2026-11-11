@@ -1,0 +1,25 @@
+classDiagram
+  class Livro {
+    +int id
+    +string titulo
+    +string autor
+    +string isbn
+    +string categoria
+    +int ano
+  }
+  class Membro {
+    +int id
+    +string nome
+    +string email
+    +string telefone
+  }
+  class Emprestimo {
+    +int id
+    +date dataEmprestimo
+    +date dataPrevista
+    +date dataDevolucao
+    +estaAtrasado() bool
+    +diasDeAtraso() int
+  }
+  Livro "1" --> "0..*" Emprestimo : é emprestado em
+  Membro "1" --> "0..*" Emprestimo : realiza

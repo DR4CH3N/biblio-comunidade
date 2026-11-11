@@ -1,0 +1,7 @@
+flowchart LR
+  V[View<br/>view/telas.js, dom.js] -->|ação do usuário| C[Controller<br/>biblio-controller.js]
+  C -->|validar / regras| M1[Model<br/>validators.js, rules.js]
+  C -->|listar/criar/atualizar/remover| R[(Repositório)]
+  R --> S[Supabase / PostgreSQL]
+  R --> L[LocalStorage - modo demo]
+  C -->|resultado ok/mensagem/erros| V

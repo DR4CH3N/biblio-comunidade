@@ -1,0 +1,10 @@
+flowchart TD
+  A([Início]) --> B[Selecionar empréstimo em aberto]
+  B --> C[Clicar em Devolver]
+  C --> D{Já devolvido?}
+  D -- sim --> E[Mostrar aviso] --> Z([Fim])
+  D -- não --> F[Gravar data de devolução]
+  F --> G[Mostrar confirmação com Desfazer]
+  G --> H{Clicou em Desfazer?}
+  H -- sim --> I[Limpar data de devolução] --> Z
+  H -- não --> Z

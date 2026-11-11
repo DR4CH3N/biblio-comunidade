@@ -1,0 +1,20 @@
+sequenceDiagram
+  actor U as Bibliotecário
+  participant V as View
+  participant C as Controller
+  participant M as Regras (model)
+  participant R as Repositório
+  U->>V: escolhe livro e membro, clica Registrar
+  V->>C: emprestar(livroId, membroId)
+  C->>M: podeEmprestar(livro, membro, empréstimos)
+  alt regra violada
+    M-->>C: ok=false, motivo
+    C-->>V: mensagem de erro
+    V-->>U: aviso na tela
+  else permitido
+    C->>R: criar(emprestimos, {datas})
+    R-->>C: registro criado
+    C->>R: listar (recarrega dados)
+    C-->>V: ok + data prevista
+    V-->>U: confirmação
+  end
