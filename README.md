@@ -40,8 +40,8 @@ Sem login: qualquer pessoa com o link altera os dados (ver `docs/01-escopo-e-req
 ## Uso de IA
 Este projeto foi desenvolvido com apoio do assistente **Claude Code** (Anthropic), que ajudou a escrever o
 código, os testes, a documentação e a configuração de publicação. Os commits feitos com esse apoio estão
-marcados com `Co-Authored-By: Claude`, e os arquivos `CLAUDE.md` e `PROMPTS.md` registram as instruções
-usadas.
+marcados com `Co-Authored-By: Claude`. As instruções usadas (`CLAUDE.md` e `PROMPTS.md`) foram retiradas da
+versão final, mas continuam disponíveis no histórico do repositório.
 
 O autor criou e configurou o projeto no Supabase (execução do `schema.sql` e do `seed.sql`, ligação com o app),
 testou o sistema publicado com dados reais — cadastros, empréstimos e devoluções — e conferiu os resultados no
