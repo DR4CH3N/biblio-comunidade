@@ -140,6 +140,18 @@ test('Supabase: traduz SQLSTATE 23505 e 23503 e falha de rede', async () => {
   await assert.rejects(mk(async () => { throw new TypeError('offline'); }).listar('livros'), (e) => e.codigo === 'REDE');
 });
 
+test('Supabase: ISBN e e-mail duplicados viram erro no campo, como no modo demo', async () => {
+  const dup = (indice, chave) => async () => resp(409, {
+    code: '23505', message: `duplicate key value violates unique constraint "${indice}"`, details: `Key (${chave})=(x) already exists.`,
+  });
+  const ctlIsbn = new BiblioController(new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, dup('ux_livros_isbn', 'isbn')));
+  const r1 = await ctlIsbn.salvarLivro({ ...livroOk(), isbn: '9788535911664' });
+  assert.equal(r1.erros?.isbn, 'Já existe um livro com este ISBN.');
+  const ctlEmail = new BiblioController(new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, dup('ux_membros_email', 'lower(email::text)')));
+  const r2 = await ctlEmail.salvarMembro(membroOk());
+  assert.equal(r2.erros?.email, 'Já existe um membro com este e-mail.');
+});
+
 test('Supabase: atualizar registro inexistente (resposta vazia) vira NAO_ENCONTRADO', async () => {
   const repo = new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, async () => resp(200, []));
   await assert.rejects(repo.atualizar('livros', 99, {}), (e) => e.codigo === 'NAO_ENCONTRADO');

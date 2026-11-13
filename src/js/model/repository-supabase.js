@@ -2,6 +2,14 @@
 // Mesma interface do LocalRepository: listar / criar / atualizar / remover.
 import { RepoError } from './errors.js';
 
+// Índices únicos do db/schema.sql -> mesma mensagem e campo que o LocalRepository usa.
+// O PostgreSQL cita o nome do índice na mensagem: 'duplicate key value violates unique constraint "ux_livros_isbn"'.
+const UNICOS = {
+  ux_livros_isbn: ['Já existe um livro com este ISBN.', 'isbn'],
+  ux_membros_email: ['Já existe um membro com este e-mail.', 'email'],
+  ux_emprestimo_livro_aberto: ['Este livro já está emprestado.', 'livro_id'],
+};
+
 export class SupabaseRepository {
   constructor({ url, anonKey }, fetchFn = globalThis.fetch.bind(globalThis)) {
     this.base = `${url.replace(/\/$/, '')}/rest/v1`;
@@ -27,7 +35,12 @@ export class SupabaseRepository {
     let corpo = {};
     try { corpo = await resp.json(); } catch { /* sem corpo */ }
     // Códigos SQLSTATE do PostgreSQL: 23505 = unique_violation, 23503 = foreign_key_violation
-    if (corpo.code === '23505') throw new RepoError('UNICO', 'Registro duplicado.', corpo.details ?? corpo.message);
+    if (corpo.code === '23505') {
+      const texto = `${corpo.message ?? ''} ${corpo.details ?? ''}`;
+      const [mensagem, campo] = Object.entries(UNICOS).find(([indice]) => texto.includes(indice))?.[1]
+        ?? ['Já existe um registro com estes dados.', corpo.details ?? corpo.message];
+      throw new RepoError('UNICO', mensagem, campo);
+    }
     if (corpo.code === '23503') throw new RepoError('VINCULO', 'Registro vinculado a outros dados.', corpo.details ?? corpo.message);
     if (resp.status === 404) throw new RepoError('NAO_ENCONTRADO', 'Registro não encontrado.');
     throw new RepoError('DESCONHECIDO', corpo.message ?? `Erro ${resp.status} no servidor.`, corpo);
