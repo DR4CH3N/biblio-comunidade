@@ -7,7 +7,7 @@
 | Integração | `node --test` (`tests/controller.test.js`) | Controller + repositório: CRUD, fluxo de empréstimo, integridade, tradução de erros do PostgreSQL |
 | Sistema (interface) | Playwright (roteiro automatizado) + testes manuais com 5 colegas | Fluxos completos na tela, mensagens, responsividade |
 
-Execução: `npm test` → **29 testes, 29 aprovados**.
+Execução: `npm test` → **38 testes, 38 aprovados**.
 
 ## 5.2 Casos de teste de aceitação (manuais)
 | ID | Passos | Resultado esperado | Req. |
@@ -34,9 +34,22 @@ Executada pelo desenvolvedor antes do teste com colegas. **Não substitui** o te
 | 3 | `aria-invalid="true"` permanecia no campo depois de corrigido (leitores de tela continuavam anunciando erro) | Revisão de código (`view/dom.js`) | Atributo removido ao revalidar | Corrigido |
 | 4 | Após a primeira rodada, `npm test` falhava ao receber a pasta `tests/` como argumento (Node 22) | Saída do terminal | Script alterado para `tests/*.test.js` | Corrigido |
 
+## 5.3.1 Laudo – segunda rodada (sistema ligado ao Supabase real)
+Depois de ligar o app ao banco real, a revisão do código e os testes no site publicado encontraram os problemas abaixo.
+Cada correção tem um commit próprio e um teste automatizado que falha sem ela.
+
+| # | Achado | Como reproduzir | Correção | Commit |
+|---|---|---|---|---|
+| 5 | ISBN ou e-mail repetido mostrava só "Registro duplicado.", sem marcar o campo (CT02, CT04) | Cadastrar livro com ISBN já existente | Nome do índice único do PostgreSQL traduzido para a mesma mensagem e campo do modo demo | `47ceb2c` |
+| 6 | Excluir livro/membro com histórico mostrava "Registro vinculado a outros dados." (CT09) | Excluir livro que já foi emprestado | Mensagem explica que há histórico de empréstimos (RN04) | `b38a485` |
+| 7 | "Desfazer devolução" não conferia as regras: reabria livro já emprestado de novo (RN01) ou deixava o membro com 4 abertos (RN02) | Emprestar A para Ana, devolver, emprestar A para Bruno, desfazer a devolução da Ana | Nova regra `podeDesfazerDevolucao` em `model/rules.js` | `5405f6e` |
+| 8 | Autor, categoria, nome e e-mail longos voltavam do banco como erro em inglês ("value too long…") | Cadastrar autor com mais de 120 caracteres | Limites do `schema.sql` aplicados na validação; erro 22001 traduzido | `8a2a68d` |
+| 9 | Com duas abas abertas, a segunda validava RN01–RN03 com dados antigos e deixava passar do limite de 3 | Emprestar na aba 1; na aba 2, sem recarregar, emprestar para o mesmo membro | Emprestar, devolver e desfazer recarregam os dados do banco antes de validar | `125a5a6` |
+| 10 | No celular (390 px) as tabelas escondiam Situação e os botões Devolver/Editar/Excluir; menu em duas linhas (CT11) | Abrir o site no celular ou no modo dispositivo do navegador (F12) | Tabelas viram cartões no celular, menu em 4 colunas, botões com 44 px | `fe63f74` |
+
 **Limitações conhecidas (não corrigidas, registradas):**
 - Sem autenticação (RNF06).
-- O `db/schema.sql` foi escrito para PostgreSQL mas **ainda não foi executado em um servidor Supabase real**; o repositório Supabase foi testado só com `fetch` simulado. Valide no passo 3 do guia.
+- RN02 (limite de 3) e RN03 (atraso) são conferidas pelo app, com os dados recarregados do banco, mas não por restrição no banco. Dois empréstimos registrados no mesmo instante para o mesmo membro ainda poderiam passar do limite. Evolução: um *trigger* no PostgreSQL.
 - Modo demo guarda dados no navegador de cada usuário (não compartilha entre colegas). Para os testes com colegas, use o modo Supabase.
 
 ## 5.4 Testes com colegas (a preencher por você)

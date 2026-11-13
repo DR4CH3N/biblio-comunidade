@@ -23,7 +23,7 @@ roda os testes e publica a pasta `src/` a cada push na `main`.
 
 ## Testes
 ```bash
-npm test   # 29 testes (Node 18+; sem dependências)
+npm test   # 38 testes (Node 18+; sem dependências)
 ```
 
 ## Estrutura
