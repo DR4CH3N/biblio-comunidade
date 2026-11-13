@@ -1,7 +1,7 @@
 // CONTROLLER – orquestra validação (model), regras (model) e persistência (repositório).
 // Não conhece o DOM. A view chama estes métodos e exibe o resultado { ok, mensagem, erros }.
 import { validarLivro, validarMembro, normalizarIsbn } from '../model/validators.js';
-import { podeEmprestar, calcularDataPrevista, hojeISO, estaAberto, estaAtrasado } from '../model/rules.js';
+import { podeEmprestar, podeDesfazerDevolucao, calcularDataPrevista, hojeISO, estaAberto, estaAtrasado } from '../model/rules.js';
 import { RepoError } from '../model/errors.js';
 
 const MSG_REPO = {
@@ -109,6 +109,14 @@ export class BiblioController {
 
   /** Desfazer devolução (ação reversível – princípio de IHC "recuperável"). */
   desfazerDevolucao(emprestimoId) {
+    const { livros, membros, emprestimos } = this.dados;
+    const emprestimo = emprestimos.find((x) => x.id === emprestimoId);
+    const regra = podeDesfazerDevolucao({
+      emprestimo, emprestimos,
+      livro: livros.find((l) => l.id === emprestimo?.livro_id),
+      membro: membros.find((m) => m.id === emprestimo?.membro_id),
+    });
+    if (!regra.ok) return Promise.resolve({ ok: false, mensagem: regra.motivo });
     return this.#executar(
       () => this.repo.atualizar('emprestimos', emprestimoId, { data_devolucao: null }),
       'Devolução desfeita.',

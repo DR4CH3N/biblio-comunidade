@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validarLivro, validarMembro, normalizarIsbn } from '../src/js/model/validators.js';
-import { calcularDataPrevista, somarDias, diasDeAtraso, estaAtrasado, podeEmprestar, hojeISO } from '../src/js/model/rules.js';
+import { calcularDataPrevista, somarDias, diasDeAtraso, estaAtrasado, podeEmprestar, podeDesfazerDevolucao, hojeISO } from '../src/js/model/rules.js';
 
 // ---------- Validadores ----------
 test('RF01 livro válido passa', () => {
@@ -84,4 +84,21 @@ test('RN03 membro com atraso não pode pegar novo livro', () => {
 test('entradas ausentes devolvem motivo claro', () => {
   assert.match(podeEmprestar({ livro: null, membro, emprestimos: [] }).motivo, /livro/i);
   assert.match(podeEmprestar({ livro, membro: null, emprestimos: [] }).motivo, /membro/i);
+});
+
+test('desfazer devolução: bloqueado se o livro foi emprestado de novo (RN01)', () => {
+  const devolvido = { id: 1, livro_id: 1, membro_id: 1, data_prevista: '2026-06-15', data_devolucao: '2026-06-02' };
+  const novoEmp = { id: 2, livro_id: 1, membro_id: 2, data_prevista: '2026-06-16', data_devolucao: null };
+  const r = podeDesfazerDevolucao({ emprestimo: devolvido, livro: { titulo: 'X' }, membro: { nome: 'Ana' }, emprestimos: [devolvido, novoEmp] });
+  assert.equal(r.ok, false);
+  assert.match(r.motivo, /já foi emprestado de novo/);
+  assert.equal(podeDesfazerDevolucao({ emprestimo: devolvido, emprestimos: [devolvido] }).ok, true);
+});
+
+test('desfazer devolução: bloqueado se o membro já tem 3 abertos (RN02)', () => {
+  const devolvido = { id: 1, livro_id: 1, membro_id: 1, data_prevista: '2026-06-15', data_devolucao: '2026-06-02' };
+  const abertos = [2, 3, 4].map((n) => ({ id: n, livro_id: n, membro_id: 1, data_prevista: '2026-06-16', data_devolucao: null }));
+  const r = podeDesfazerDevolucao({ emprestimo: devolvido, livro: { titulo: 'X' }, membro: { nome: 'Ana' }, emprestimos: [devolvido, ...abertos] });
+  assert.equal(r.ok, false);
+  assert.match(r.motivo, /Ana já tem 3 empréstimos abertos/);
 });

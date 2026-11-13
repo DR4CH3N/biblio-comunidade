@@ -166,3 +166,17 @@ test('Supabase: atualizar registro inexistente (resposta vazia) vira NAO_ENCONTR
   const repo = new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, async () => resp(200, []));
   await assert.rejects(repo.atualizar('livros', 99, {}), (e) => e.codigo === 'NAO_ENCONTRADO');
 });
+
+test('desfazer devolução não cria dois empréstimos abertos do mesmo livro', async () => {
+  const ctl = await novo();
+  await ctl.salvarLivro(livroOk()); await ctl.salvarMembro(membroOk(1)); await ctl.salvarMembro(membroOk(2));
+  const [l] = ctl.dados.livros; const [m1, m2] = ctl.dados.membros;
+  await ctl.emprestar(l.id, m1.id);
+  const primeiro = ctl.dados.emprestimos[0].id;
+  await ctl.devolver(primeiro);
+  await ctl.emprestar(l.id, m2.id);
+  const r = await ctl.desfazerDevolucao(primeiro);
+  assert.equal(r.ok, false);
+  assert.match(r.mensagem, /já foi emprestado de novo/);
+  assert.equal(ctl.resumo().emprestados, 1);
+});

@@ -54,3 +54,20 @@ export function podeEmprestar({ livro, membro, emprestimos }, hoje = hojeISO()) 
   }
   return { ok: true };
 }
+
+/**
+ * Desfazer uma devolução reabre o empréstimo, então ele não pode violar RN01 nem RN02.
+ * (RN03 não se aplica: não é um livro novo, é a correção de uma devolução registrada por engano.)
+ */
+export function podeDesfazerDevolucao({ emprestimo, livro, membro, emprestimos }) {
+  if (!emprestimo) return { ok: false, motivo: 'Empréstimo não encontrado.' };
+  if (estaAberto(emprestimo)) return { ok: false, motivo: 'Este empréstimo já está em aberto.' };
+  const outros = emprestimos.filter((e) => e.id !== emprestimo.id);
+  if (!livroDisponivel(emprestimo.livro_id, outros)) {
+    return { ok: false, motivo: `Não é possível desfazer: o livro "${livro?.titulo ?? ''}" já foi emprestado de novo.` };
+  }
+  if (abertosDoMembro(emprestimo.membro_id, outros).length >= MAX_EMPRESTIMOS_ABERTOS) {
+    return { ok: false, motivo: `Não é possível desfazer: ${membro?.nome ?? 'o membro'} já tem ${MAX_EMPRESTIMOS_ABERTOS} empréstimos abertos.` };
+  }
+  return { ok: true };
+}
