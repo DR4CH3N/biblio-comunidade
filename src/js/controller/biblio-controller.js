@@ -8,6 +8,7 @@ const MSG_REPO = {
   UNICO: (e) => e.message,
   VINCULO: (e) => e.message,
   REDE: (e) => e.message,
+  INVALIDO: (e) => e.message,
   NAO_ENCONTRADO: () => 'Registro não encontrado. Atualize a página e tente novamente.',
   DESCONHECIDO: (e) => `Erro inesperado: ${e.message}`,
 };

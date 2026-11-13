@@ -180,3 +180,8 @@ test('desfazer devolução não cria dois empréstimos abertos do mesmo livro', 
   assert.match(r.mensagem, /já foi emprestado de novo/);
   assert.equal(ctl.resumo().emprestados, 1);
 });
+
+test('Supabase: texto maior que a coluna (22001) vira mensagem em português', async () => {
+  const repo = new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, async () => resp(400, { code: '22001', message: 'value too long for type character varying(120)' }));
+  await assert.rejects(repo.criar('livros', {}), (e) => e.codigo === 'INVALIDO' && /tamanho permitido/.test(e.message));
+});

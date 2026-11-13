@@ -47,6 +47,8 @@ export class SupabaseRepository {
       throw new RepoError('UNICO', mensagem, campo);
     }
     if (corpo.code === '23503') throw new RepoError('VINCULO', 'Livro ou membro inexistente.', corpo.details ?? corpo.message);
+    // 22001 = string_data_right_truncation: rede de segurança caso algum limite do schema escape da validação
+    if (corpo.code === '22001') throw new RepoError('INVALIDO', 'Algum campo passou do tamanho permitido. Encurte o texto e tente de novo.', corpo.message);
     if (resp.status === 404) throw new RepoError('NAO_ENCONTRADO', 'Registro não encontrado.');
     throw new RepoError('DESCONHECIDO', corpo.message ?? `Erro ${resp.status} no servidor.`, corpo);
   }

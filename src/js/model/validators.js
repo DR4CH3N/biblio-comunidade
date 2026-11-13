@@ -16,7 +16,11 @@ export function validarLivro(d, anoAtual = new Date().getFullYear()) {
   if (!String(d.titulo ?? '').trim()) erros.titulo = 'Informe o título do livro.';
   else if (d.titulo.trim().length > 150) erros.titulo = 'O título deve ter no máximo 150 caracteres.';
 
-  if (!String(d.autor ?? '').trim()) erros.autor = 'Informe o autor.';
+  const autor = String(d.autor ?? '').trim();
+  if (!autor) erros.autor = 'Informe o autor.';
+  else if (autor.length > 120) erros.autor = 'O autor deve ter no máximo 120 caracteres.';
+
+  if (String(d.categoria ?? '').trim().length > 60) erros.categoria = 'A categoria deve ter no máximo 60 caracteres.';
 
   const isbn = normalizarIsbn(d.isbn);
   if (isbn && !/^(\d{10}|\d{13})$/.test(isbn)) erros.isbn = 'ISBN deve ter 10 ou 13 dígitos.';
@@ -35,9 +39,11 @@ export function validarMembro(d) {
   const nome = String(d.nome ?? '').trim();
   if (!nome) erros.nome = 'Informe o nome completo.';
   else if (nome.length < 3) erros.nome = 'O nome deve ter pelo menos 3 caracteres.';
+  else if (nome.length > 120) erros.nome = 'O nome deve ter no máximo 120 caracteres.';
 
   const email = String(d.email ?? '').trim();
   if (!email) erros.email = 'Informe o e-mail.';
+  else if (email.length > 150) erros.email = 'O e-mail deve ter no máximo 150 caracteres.';
   else if (!EMAIL_RE.test(email)) erros.email = 'E-mail inválido (exemplo: nome@dominio.com).';
 
   const tel = String(d.telefone ?? '').replace(/\D/g, '');

@@ -102,3 +102,14 @@ test('desfazer devolução: bloqueado se o membro já tem 3 abertos (RN02)', () 
   assert.equal(r.ok, false);
   assert.match(r.motivo, /Ana já tem 3 empréstimos abertos/);
 });
+
+test('limites de tamanho iguais aos do schema.sql (autor, categoria, nome, e-mail)', () => {
+  const longo = (n) => 'a'.repeat(n);
+  const l = validarLivro({ titulo: 'T', autor: longo(121), categoria: longo(61) });
+  assert.match(l.erros.autor, /120/);
+  assert.match(l.erros.categoria, /60/);
+  assert.equal(validarLivro({ titulo: 'T', autor: longo(120), categoria: longo(60) }).ok, true);
+  const m = validarMembro({ nome: longo(121), email: `${longo(140)}@exemplo.com` });
+  assert.match(m.erros.nome, /120/);
+  assert.match(m.erros.email, /150/);
+});
