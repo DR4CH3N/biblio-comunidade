@@ -63,7 +63,32 @@ dialog h3 { margin: 0 0 16px; }
 .toast.ok { background: var(--ok); }
 .toast button { background: transparent; color: #fff; border-color: rgba(255,255,255,.6); min-height: 32px; padding: 4px 10px; }
 .aviso { background: var(--err-bg); border: 1px solid #f1b8b3; color: var(--err); padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; }
+/* ---------- Celular (até 640 px) ---------- */
 @media (max-width: 640px) {
-  .topo nav { margin-left: 0; width: 100%; }
-  th, td { padding: 8px 10px; font-size: .92rem; }
+  /* Cabeçalho compacto: título e selo na mesma linha, menu em 4 colunas iguais numa linha só */
+  .topo { padding: 10px 12px; gap: 8px; }
+  .topo h1 { font-size: 1.05rem; }
+  .selo { font-size: .72rem; }
+  .topo nav { margin-left: 0; width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .topo nav a { padding: 10px 2px; text-align: center; font-size: .85rem; }
+  main { padding: 16px 12px 96px; }
+  input[type=search] { max-width: none; }
+
+  /* Tabelas viram cartões: cada linha é um bloco e cada célula mostra o nome da coluna */
+  .tabela-wrap { overflow: visible; background: none; border: 0; }
+  table, tbody, tr, td { display: block; width: 100%; }
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  tr { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 10px; }
+  td { border: 0; padding: 4px 0; display: flex; justify-content: space-between; gap: 12px; text-align: right; }
+  td[data-label]::before { content: attr(data-label); color: var(--muted); font-size: .85rem; text-align: left; }
+  td.principal { display: block; text-align: left; font-size: 1.02rem; padding-bottom: 6px; }
+  td.acoes { justify-content: flex-end; gap: 8px; padding-top: 8px; margin-top: 4px; border-top: 1px solid var(--line); }
+  td.acoes button { min-height: 44px; padding: 8px 16px; } /* alvo de toque de 44 px (WCAG 2.5.5) */
+  td.acoes button.link { border: 1px solid var(--line); }
+
+  /* Modal e avisos ocupam a largura da tela */
+  dialog { width: calc(100vw - 16px); max-width: none; }
+  dialog form { padding: 18px 16px; }
+  .rodape-modal button { flex: 1; }
+  #toasts { left: 12px; right: 12px; bottom: 12px; max-width: none; }
 }

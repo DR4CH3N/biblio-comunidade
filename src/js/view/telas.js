@@ -23,7 +23,7 @@ export function criarTelas(ctl, redesenhar) {
     const r = ctl.resumo();
     const linhas = r.atrasados.map((e) => {
       const l = livros().find((x) => x.id === e.livro_id); const m = membros().find((x) => x.id === e.membro_id);
-      return `<tr><td>${esc(l?.titulo)}</td><td>${esc(m?.nome)}</td><td>${fmtData(e.data_prevista)}</td><td><span class="tag late">${diasDeAtraso(e, hoje())} dia(s) de atraso</span></td></tr>`;
+      return `<tr><td data-label="Livro">${esc(l?.titulo)}</td><td data-label="Membro">${esc(m?.nome)}</td><td data-label="Previsto">${fmtData(e.data_prevista)}</td><td data-label="Situação"><span class="tag late">${diasDeAtraso(e, hoje())} dia(s) de atraso</span></td></tr>`;
     }).join('');
     const demoVazio = r.totalLivros === 0 && typeof ctl.repo.reiniciar === 'function';
     main.innerHTML = `${cabecalho('Painel', 'Visão geral do acervo e das devoluções.', demoVazio ? '<button id="exemplo">Carregar dados de exemplo</button>' : '')}
@@ -66,9 +66,9 @@ export function criarTelas(ctl, redesenhar) {
     const q = filtroLivros.toLowerCase();
     const lista = livros().filter((l) => `${l.titulo} ${l.autor} ${l.categoria ?? ''} ${l.isbn ?? ''}`.toLowerCase().includes(q));
     const linhas = lista.map((l) => `<tr>
-      <td><strong>${esc(l.titulo)}</strong><br><small>${esc(l.autor)}</small></td>
-      <td>${esc(l.categoria ?? '—')}</td><td>${esc(l.ano ?? '—')}</td>
-      <td>${livroDisponivel(l.id, emprestimos()) ? '<span class="tag ok">Disponível</span>' : '<span class="tag out">Emprestado</span>'}</td>
+      <td class="principal"><strong>${esc(l.titulo)}</strong><br><small>${esc(l.autor)}</small></td>
+      <td data-label="Categoria">${esc(l.categoria ?? '—')}</td><td data-label="Ano">${esc(l.ano ?? '—')}</td>
+      <td data-label="Situação">${livroDisponivel(l.id, emprestimos()) ? '<span class="tag ok">Disponível</span>' : '<span class="tag out">Emprestado</span>'}</td>
       <td class="acoes"><button class="link" data-ed="${l.id}" aria-label="Editar ${esc(l.titulo)}">Editar</button>
       <button class="link" data-ex="${l.id}" aria-label="Excluir ${esc(l.titulo)}">Excluir</button></td></tr>`).join('');
     main.innerHTML = `${cabecalho('Livros', `${livros().length} título(s) no acervo.`, '<button class="pri" id="novo">+ Novo livro</button>')}
@@ -102,7 +102,7 @@ export function criarTelas(ctl, redesenhar) {
   function telaMembros(main) {
     const linhas = membros().map((m) => {
       const n = emprestimos().filter((e) => e.membro_id === m.id && estaAberto(e)).length;
-      return `<tr><td><strong>${esc(m.nome)}</strong></td><td>${esc(m.email)}</td><td>${esc(m.telefone ?? '—')}</td><td>${n} aberto(s)</td>
+      return `<tr><td class="principal"><strong>${esc(m.nome)}</strong></td><td data-label="E-mail">${esc(m.email)}</td><td data-label="Telefone">${esc(m.telefone ?? '—')}</td><td data-label="Empréstimos">${n} aberto(s)</td>
         <td class="acoes"><button class="link" data-ed="${m.id}" aria-label="Editar ${esc(m.nome)}">Editar</button>
         <button class="link" data-ex="${m.id}" aria-label="Excluir ${esc(m.nome)}">Excluir</button></td></tr>`;
     }).join('');
@@ -146,7 +146,7 @@ export function criarTelas(ctl, redesenhar) {
       const l = livros().find((x) => x.id === e.livro_id); const m = membros().find((x) => x.id === e.membro_id);
       const tag = !estaAberto(e) ? `<span class="tag done">Devolvido em ${fmtData(e.data_devolucao)}</span>`
         : estaAtrasado(e, hoje()) ? `<span class="tag late">Atrasado ${diasDeAtraso(e, hoje())} dia(s)</span>` : '<span class="tag out">No prazo</span>';
-      return `<tr><td><strong>${esc(l?.titulo)}</strong></td><td>${esc(m?.nome)}</td><td>${fmtData(e.data_emprestimo)}</td><td>${fmtData(e.data_prevista)}</td><td>${tag}</td>
+      return `<tr><td class="principal"><strong>${esc(l?.titulo)}</strong></td><td data-label="Membro">${esc(m?.nome)}</td><td data-label="Saída">${fmtData(e.data_emprestimo)}</td><td data-label="Previsto">${fmtData(e.data_prevista)}</td><td data-label="Situação">${tag}</td>
         <td class="acoes">${estaAberto(e) ? `<button data-dev="${e.id}">Devolver</button>` : `<button class="link" data-und="${e.id}">Desfazer</button>`}</td></tr>`;
     }).join('');
     main.innerHTML = `${cabecalho('Empréstimos', 'Registre saídas e devoluções. Prazo padrão: 14 dias; limite de 3 livros por pessoa.', '<button class="pri" id="novo">+ Novo empréstimo</button>')}
