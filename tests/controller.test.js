@@ -185,3 +185,26 @@ test('Supabase: texto maior que a coluna (22001) vira mensagem em português', a
   const repo = new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, async () => resp(400, { code: '22001', message: 'value too long for type character varying(120)' }));
   await assert.rejects(repo.criar('livros', {}), (e) => e.codigo === 'INVALIDO' && /tamanho permitido/.test(e.message));
 });
+
+test('duas telas abertas: a segunda confere o limite de 3 (RN02) com os dados atuais', async () => {
+  const repo = new LocalRepository(memStorage());
+  const tela1 = new BiblioController(repo, () => '2026-06-01');
+  const tela2 = new BiblioController(repo, () => '2026-06-01');
+  await tela1.carregar();
+  for (let n = 1; n <= 4; n++) await tela1.salvarLivro(livroOk(n));
+  await tela1.salvarMembro(membroOk(1));
+  const [l1, l2, l3, l4] = tela1.dados.livros; const [m] = tela1.dados.membros;
+  await tela1.emprestar(l1.id, m.id); await tela1.emprestar(l2.id, m.id);
+  await tela2.carregar(); // tela2 vê 2 empréstimos abertos
+  assert.equal((await tela1.emprestar(l3.id, m.id)).ok, true); // tela1 faz o 3º
+  const r = await tela2.emprestar(l4.id, m.id); // sem recarregar, tela2 deixaria passar o 4º
+  assert.equal(r.ok, false);
+  assert.match(r.mensagem, /limite de 3/);
+});
+
+test('falha de rede ao conferir os dados devolve mensagem, sem lançar exceção', async () => {
+  const ctl = new BiblioController(new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, async () => { throw new TypeError('offline'); }));
+  const r = await ctl.emprestar(1, 1);
+  assert.equal(r.ok, false);
+  assert.match(r.mensagem, /Não foi possível conectar/);
+});

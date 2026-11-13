@@ -35,11 +35,26 @@ export class BiblioController {
       await this.carregar();
       return { ok: true, mensagem: sucesso };
     } catch (e) {
-      if (e instanceof RepoError) {
-        const campo = e.codigo === 'UNICO' && ['isbn', 'email'].includes(e.detalhe) ? { [e.detalhe]: e.message } : undefined;
-        return { ok: false, mensagem: (MSG_REPO[e.codigo] ?? MSG_REPO.DESCONHECIDO)(e), erros: campo };
-      }
-      return { ok: false, mensagem: `Erro inesperado: ${e.message}` };
+      return this.#falha(e);
+    }
+  }
+
+  #falha(e) {
+    if (e instanceof RepoError) {
+      const campo = e.codigo === 'UNICO' && ['isbn', 'email'].includes(e.detalhe) ? { [e.detalhe]: e.message } : undefined;
+      return { ok: false, mensagem: (MSG_REPO[e.codigo] ?? MSG_REPO.DESCONHECIDO)(e), erros: campo };
+    }
+    return { ok: false, mensagem: `Erro inesperado: ${e.message}` };
+  }
+
+  // As regras de empréstimo (RN01–RN03) são conferidas com os dados mais recentes do banco,
+  // e não com o que a tela carregou: outra pessoa pode ter emprestado ou devolvido nesse meio-tempo.
+  async #recarregar() {
+    try {
+      await this.carregar();
+      return null;
+    } catch (e) {
+      return this.#falha(e);
     }
   }
 
@@ -82,12 +97,14 @@ export class BiblioController {
   }
 
   // ---------- Empréstimos ----------
-  emprestar(livroId, membroId) {
+  async emprestar(livroId, membroId) {
+    const falhou = await this.#recarregar();
+    if (falhou) return falhou;
     const { livros, membros, emprestimos } = this.dados;
     const livro = livros.find((l) => l.id === Number(livroId));
     const membro = membros.find((m) => m.id === Number(membroId));
     const regra = podeEmprestar({ livro, membro, emprestimos }, this.hoje());
-    if (!regra.ok) return Promise.resolve({ ok: false, mensagem: regra.motivo });
+    if (!regra.ok) return { ok: false, mensagem: regra.motivo };
     const data = this.hoje();
     return this.#executar(
       () => this.repo.criar('emprestimos', {
@@ -98,10 +115,12 @@ export class BiblioController {
     );
   }
 
-  devolver(emprestimoId) {
+  async devolver(emprestimoId) {
+    const falhou = await this.#recarregar();
+    if (falhou) return falhou;
     const e = this.dados.emprestimos.find((x) => x.id === emprestimoId);
-    if (!e) return Promise.resolve({ ok: false, mensagem: 'Empréstimo não encontrado.' });
-    if (!estaAberto(e)) return Promise.resolve({ ok: false, mensagem: 'Este livro já foi devolvido.' });
+    if (!e) return { ok: false, mensagem: 'Empréstimo não encontrado.' };
+    if (!estaAberto(e)) return { ok: false, mensagem: 'Este livro já foi devolvido.' };
     return this.#executar(
       () => this.repo.atualizar('emprestimos', e.id, { data_devolucao: this.hoje() }),
       'Devolução registrada.',
@@ -109,7 +128,9 @@ export class BiblioController {
   }
 
   /** Desfazer devolução (ação reversível – princípio de IHC "recuperável"). */
-  desfazerDevolucao(emprestimoId) {
+  async desfazerDevolucao(emprestimoId) {
+    const falhou = await this.#recarregar();
+    if (falhou) return falhou;
     const { livros, membros, emprestimos } = this.dados;
     const emprestimo = emprestimos.find((x) => x.id === emprestimoId);
     const regra = podeDesfazerDevolucao({
@@ -117,7 +138,7 @@ export class BiblioController {
       livro: livros.find((l) => l.id === emprestimo?.livro_id),
       membro: membros.find((m) => m.id === emprestimo?.membro_id),
     });
-    if (!regra.ok) return Promise.resolve({ ok: false, mensagem: regra.motivo });
+    if (!regra.ok) return { ok: false, mensagem: regra.motivo };
     return this.#executar(
       () => this.repo.atualizar('emprestimos', emprestimoId, { data_devolucao: null }),
       'Devolução desfeita.',
