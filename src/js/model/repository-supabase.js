@@ -9,6 +9,11 @@ const UNICOS = {
   ux_membros_email: ['Já existe um membro com este e-mail.', 'email'],
   ux_emprestimo_livro_aberto: ['Este livro já está emprestado.', 'livro_id'],
 };
+// Excluir com empréstimos viola a FK (on delete restrict, RN04): mesma mensagem do LocalRepository.
+const COM_HISTORICO = {
+  livros: 'Este livro possui histórico de empréstimos e não pode ser excluído.',
+  membros: 'Este membro possui histórico de empréstimos e não pode ser excluído.',
+};
 
 export class SupabaseRepository {
   constructor({ url, anonKey }, fetchFn = globalThis.fetch.bind(globalThis)) {
@@ -41,7 +46,7 @@ export class SupabaseRepository {
         ?? ['Já existe um registro com estes dados.', corpo.details ?? corpo.message];
       throw new RepoError('UNICO', mensagem, campo);
     }
-    if (corpo.code === '23503') throw new RepoError('VINCULO', 'Registro vinculado a outros dados.', corpo.details ?? corpo.message);
+    if (corpo.code === '23503') throw new RepoError('VINCULO', 'Livro ou membro inexistente.', corpo.details ?? corpo.message);
     if (resp.status === 404) throw new RepoError('NAO_ENCONTRADO', 'Registro não encontrado.');
     throw new RepoError('DESCONHECIDO', corpo.message ?? `Erro ${resp.status} no servidor.`, corpo);
   }
@@ -62,6 +67,11 @@ export class SupabaseRepository {
   }
 
   async remover(tabela, id) {
-    await this.#req(`${tabela}?id=eq.${id}`, { method: 'DELETE' });
+    try {
+      await this.#req(`${tabela}?id=eq.${id}`, { method: 'DELETE' });
+    } catch (e) {
+      if (e.codigo === 'VINCULO' && COM_HISTORICO[tabela]) throw new RepoError('VINCULO', COM_HISTORICO[tabela], e.detalhe);
+      throw e;
+    }
   }
 }

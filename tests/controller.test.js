@@ -152,6 +152,16 @@ test('Supabase: ISBN e e-mail duplicados viram erro no campo, como no modo demo'
   assert.equal(r2.erros?.email, 'Já existe um membro com este e-mail.');
 });
 
+test('Supabase: excluir livro ou membro com histórico explica o motivo (RN04)', async () => {
+  const fk = (tabela) => async () => resp(409, {
+    code: '23503', message: `update or delete on table "${tabela}" violates foreign key constraint "emprestimos_${tabela.slice(0, -1)}_id_fkey" on table "emprestimos"`,
+  });
+  const ctlL = new BiblioController(new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, fk('livros')));
+  assert.equal((await ctlL.excluirLivro(1)).mensagem, 'Este livro possui histórico de empréstimos e não pode ser excluído.');
+  const ctlM = new BiblioController(new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, fk('membros')));
+  assert.equal((await ctlM.excluirMembro(1)).mensagem, 'Este membro possui histórico de empréstimos e não pode ser excluído.');
+});
+
 test('Supabase: atualizar registro inexistente (resposta vazia) vira NAO_ENCONTRADO', async () => {
   const repo = new SupabaseRepository({ url: 'https://x.co', anonKey: 'K' }, async () => resp(200, []));
   await assert.rejects(repo.atualizar('livros', 99, {}), (e) => e.codigo === 'NAO_ENCONTRADO');
